@@ -11,14 +11,14 @@ class Renju:
         self.board = Board()
         self.turn = 1
 
-    def loc_check(self, X:int, Y:int) -> int :
-        return self.board.matrix[X][Y]
+    def loc_check(self, x:int, y:int) -> int :
+        return self.board.matrix[x][y]
 
-    def place(self, p_color: int, X:int, Y:int) -> bool:
-        if(self.loc_check(X,Y) != 0):
+    def place(self, p_color: int, x:int, y:int) -> bool:
+        if(self.loc_check(x,y) != 0):
             return False
 
-        self.board.matrix[X][Y] = p_color
+        self.board.matrix[x][y] = p_color
         return True
 
     def turns(self) -> int:
@@ -28,6 +28,8 @@ class Renju:
                 x_loc = int(input("X? "))
                 y_loc = int(input("Y? "))
                 valid_move = self.place(BLACK_PIECE,x_loc,y_loc)
+                if not valid_move :
+                    print("Place deja occupée")
                 if self.five_check(BLACK_PIECE):
                     return 1
 
@@ -39,7 +41,7 @@ class Renju:
                 if not valid_move :
                     print("Place deja occupée")
                 if self.five_check(WHITE_PIECE):
-                    return 1
+                    return 2
 
         self.turn += 1
         return 0
@@ -93,7 +95,7 @@ class Renju:
         return False
 
     #TODO Implementer la sequence des 3 premiers tours.
-    #TODO Impelmenter les limitations des noirs. (fourchette 3 x 3 / 4 x 4, Overline)
+    #TODO Implementer les limitations des noirs. (fourchette 3 x 3 / 4 x 4, Overline)
 
     def run(self):
         running = True
