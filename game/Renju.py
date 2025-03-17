@@ -45,7 +45,7 @@ class Renju:
         return 0
 
 
-    def five_check(self, p_color):
+    def five_check(self, p_color:int) -> bool:
         alignment = 0
 
         # Lignes
@@ -68,30 +68,51 @@ class Renju:
                     alignment = 0
             alignment = 0
 
-        #TODO Manque les diags
+        #TODO + de tests sur les diagonales
+
+        # Diags /
+        for col in range(4,15) :
+            for row in range(0, col+1) :
+                if self.board.matrix[row][col-row] == p_color :
+                    alignment += 1
+                    if alignment == 5 : return True
+                else :
+                    alignment = 0
+            alignment = 0
+
+        # Diags \
+        for col in range(10,-1,-1) :
+            for row in range(0, 15-col) :
+                if self.board.matrix[row][col+row] == p_color :
+                    alignment += 1
+                    if alignment == 5 : return True
+                else :
+                    alignment = 0
+            alignment = 0
 
         return False
 
     #TODO Implementer la sequence des 3 premiers tours.
+    #TODO Impelmenter les limitations des noirs. (fourchette 3 x 3 / 4 x 4, Overline)
 
     def run(self):
         running = True
 
         # En CLI
-        # while running:
-        #     print(f"Tour numero : {self.turn}")
-        #     for e in self.board.matrix:
-        #         print(e)
-        #
-        #     p = self.turns()
-        #     if p != 0 :
-        #         print(f"Joueur {p} won !")
-        #         running = False
-
-        #TODO Interface Graphique
         while running:
-            for ev in pygame.event.get():
-                if ev.type == pygame.QUIT:
-                    running = False
-            self.board.draw()
-        pygame.quit()
+            print(f"Tour numero : {self.turn}")
+            for e in self.board.matrix:
+                print(e)
+
+            p = self.turns()
+            if p != 0 :
+                print(f"Player {p} won !")
+                running = False
+
+        # TODO Interface Graphique
+        # while running:
+        #     for ev in pygame.event.get():
+        #         if ev.type == pygame.QUIT:
+        #             running = False
+        #     self.board.draw()
+        # pygame.quit()
