@@ -1,7 +1,5 @@
-import random
-import time
-
 import pygame
+
 from game import Board
 
 EMPTY = 0
@@ -26,44 +24,24 @@ class Renju:
         self.board.matrix[x][y] = p_color
         return True
 
-    def turns(self) -> int:
-        valid_move = False
+    def turns(self, x_loc, y_loc) -> int:
         if self.turn % 2 == 1 :
-            while not valid_move :
-                x_loc = int(input("X? "))
-                y_loc = int(input("Y? "))
+            if not self.place(BLACK_PIECE,x_loc,y_loc) :
+                raise InvalidMove("Case impossible.")
 
-                '''
-                |
-                v Juste pour tester l'affichage des pieces avec la fonction board.disp_put
-                '''
-                #x_loc = random.randint(0,14)
-                #y_loc = random.randint(0,14)
-                valid_move = self.place(BLACK_PIECE,x_loc,y_loc)
-
-                if valid_move:
-                    self.board.disp_put(BLACK_PIECE,x_loc,y_loc)
-                    print("fork 3 check " + str(self.fork_three_check(x_loc, y_loc)))
-                    if self.five_check(BLACK_PIECE):
-                        return 1
-                else:
-                    print("Place deja occupée")
+            self.board.scene.update_case(BLACK_PIECE, x_loc, y_loc)
+            # print("fork 3 check " + str(self.fork_three_check(x_loc, y_loc))) // Retourne une erreur
+            if self.five_check(BLACK_PIECE):
+                return 1
 
         else:
-            while not valid_move :
-                x_loc = int(input("X? "))
-                y_loc = int(input("Y? "))
-                '''idem ici'''
-                #x_loc = random.randint(0,14)
-                #y_loc = random.randint(0,14)
-                valid_move = self.place(WHITE_PIECE,x_loc,y_loc)
 
-                if valid_move:
-                    self.board.disp_put(WHITE_PIECE,x_loc,y_loc)
-                    if self.five_check(WHITE_PIECE):
-                        return 1
-                else:
-                    print("Place deja occupée")
+            if not self.place(WHITE_PIECE,x_loc,y_loc) :
+                raise InvalidMove("Case impossible.")
+
+            self.board.scene.update_case(WHITE_PIECE, x_loc, y_loc)
+            if self.five_check(WHITE_PIECE):
+                return 1
 
         self.turn += 1
         return 0
@@ -93,29 +71,29 @@ class Renju:
 
         #TODO + de tests sur les diagonales
 
-        '''# Diags /
-        for col in range(4,15) :
-            for row in range(0, col+1) :
-                if self.board.matrix[row][col-row] == p_color :
-                    alignment += 1
-                    if alignment == 5 : return True
-                else :
-                    alignment = 0
-            alignment = 0
-
-        # Diags \
-        for col in range(10,-1,-1) :
-            for row in range(0, 15-col) :
-                if self.board.matrix[row][col+row] == p_color :
-                    alignment += 1
-                    if alignment == 5 : return True
-                else :
-                    alignment = 0
-            alignment = 0'''
+        # # Diags /
+        # for col in range(4,15) :
+        #     for row in range(0, col+1) :
+        #         if self.board.matrix[row][col-row] == p_color :
+        #             alignment += 1
+        #             if alignment == 5 : return True
+        #         else :
+        #             alignment = 0
+        #     alignment = 0
+        #
+        # # Diags \
+        # for col in range(10,-1,-1) :
+        #     for row in range(0, 15-col) :
+        #         if self.board.matrix[row][col+row] == p_color :
+        #             alignment += 1
+        #             if alignment == 5 : return True
+        #         else :
+        #             alignment = 0
+        #     alignment = 0
 
         #Diags /
-        for col in range(14,3,-1) :
-            for row in range(14,3,-1) :
+        for col in range(14,-1,-1) :
+            for row in range(14,-1,-1) :
                 if ((self.board.matrix[row][col] == p_color) &
                         (self.board.matrix[row-1][col-1] == p_color) &
                         (self.board.matrix[row-2][col-2] == p_color) &
@@ -328,30 +306,27 @@ class Renju:
 
         # En CLI
         while running:
-            print(f"Tour numero : {self.turn}")
-            for e in self.board.matrix:
-                print(e)
-
-            '''
-            Y'a un probleme ici c'est que quand ca attend l'input de l'utilisateur trop longtemps alors l'interface
-            graphique va crash. Je suppose que c'est du au fait que ca bloque la boucle infini et que ca check pas les
-            events pendant trop de temps. Normalement ca sera corrigé j'imagine en implementant l'event ou il faudra
-            juste cliquer sur l'interface graphique qui ducoup n'interrompera normalement pas le programme en attendant
-            l'input utilisateur comme ici. 
-            |
-            v
-            '''
-            p = self.turns()
-            time.sleep(0.3) # Juste histoire que ca spam pas les pions a la vitesse de la lumiere.
-            if p != 0 :
-                print(f"Player {p} won !")
-                # running = False
-
-
-        # TODO Interface Graphique
-        # while running:
             for ev in pygame.event.get():
                 if ev.type == pygame.QUIT:
                     running = False
+
+                if ev.type == pygame.MOUSEBUTTONDOWN :
+                    mouse_pos = ev.pos
+
+                    for x in range(15):
+                        for y in range(15):
+                            if self.board.scene.grid[x][y].collidepoint(mouse_pos) :
+                                try:
+                                    print(f"Mouse button pressed at {mouse_pos}") #debug
+                                    if self.turns(x, y) :
+                                        print(f"Player won !")
+                                        running = False
+                                except InvalidMove as e:
+                                    print(e.message)
             pygame.display.flip()
         pygame.quit()
+
+class InvalidMove(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
