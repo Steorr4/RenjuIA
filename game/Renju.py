@@ -1,6 +1,7 @@
 import pygame
 
 from game import Board
+from game.GameScene import S_HSIZE
 
 EMPTY = 0
 BLACK_PIECE = 1
@@ -13,6 +14,7 @@ class Renju:
         self.turn = 1
         self.p1 = BLACK_PIECE
         self.p2 = WHITE_PIECE
+        self.is_finished = False
 
     def loc_check(self, x:int, y:int) -> int :
         return self.board.matrix[x][y]
@@ -34,6 +36,11 @@ class Renju:
             if self.five_check(BLACK_PIECE):
                 return 1
 
+            if self.p1 == BLACK_PIECE:
+                self.board.scene.update_player(f"Joueur 2 joue",f"avec les Blancs.")
+            else:
+                self.board.scene.update_player(f"Joueur 2 joue",f"avec les Noirs.")
+
         else:
 
             if not self.place(WHITE_PIECE,x_loc,y_loc) :
@@ -41,9 +48,16 @@ class Renju:
 
             self.board.scene.update_case(WHITE_PIECE, x_loc, y_loc)
             if self.five_check(WHITE_PIECE):
-                return 1
+                return 2
+
+            if self.p2 == BLACK_PIECE:
+                self.board.scene.update_player(f"Joueur 1 joue",f"avec les Blancs.")
+            else:
+                self.board.scene.update_player(f"Joueur 1 joue",f"avec les Noirs.")
 
         self.turn += 1
+        self.board.scene.update_turn(f"Tour n°{self.turn}")
+
         return 0
 
     def five_check(self, p_color:int) -> bool:
@@ -313,18 +327,43 @@ class Renju:
                 if ev.type == pygame.MOUSEBUTTONDOWN :
                     mouse_pos = ev.pos
 
-                    for x in range(15):
-                        for y in range(15):
-                            if self.board.scene.grid[x][y].collidepoint(mouse_pos) :
-                                try:
-                                    print(f"Mouse button pressed at {mouse_pos}") #debug
-                                    if self.turns(x, y) :
-                                        print(f"Player won !")
-                                        running = False
-                                except InvalidMove as e:
-                                    print(e.message)
+                    if self.is_finished :
+                        print(f" Retry: {self.board.scene.retry}")
+                        print(f" Quit: {self.board.scene.quit}")
+                        print(f" Mouse: {mouse_pos}")
+                        if self.board.scene.retry.collidepoint(mouse_pos[0]-220, mouse_pos[1]-300) :
+                            self.reload()
+                        elif self.board.scene.quit.collidepoint(mouse_pos[0]-220, mouse_pos[1]-300) :
+                            running = False
+                    else:
+                        for x in range(15):
+                            for y in range(15):
+                                if self.board.scene.grid[x][y].collidepoint(mouse_pos) :
+                                    try:
+                                        win = self.turns(x, y)
+                                        if win != 0:
+                                            self.board.scene.disp_winning_screen(win)
+                                            self.is_finished = True
+                                    except InvalidMove as e:
+                                        print(e.message)
             pygame.display.flip()
         pygame.quit()
+
+    def reload(self):
+        self.board.scene.board = pygame.transform.scale(pygame.image.load("./game/assets/board.png"), (S_HSIZE-300, S_HSIZE-300))
+        self.board.scene.screen.blit(self.board.scene.board, (0, 0))
+        for x in range(15):
+            for y in range(15):
+                self.board.matrix[x][y] = 0
+        self.turn = 1
+        self.board.scene.update_turn(f"Tour n°{self.turn}")
+        self.board.scene.update_player(f"Joueur 1 joue",f"avec les Noirs.")
+        self.p1 = BLACK_PIECE
+        self.p2 = WHITE_PIECE
+        self.is_finished = False
+
+        pygame.display.flip()
+        self.run()
 
 class InvalidMove(Exception):
     def __init__(self, message):
